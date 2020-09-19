@@ -1,0 +1,97 @@
+---
+title: "COVID Temperatures- R Notebook"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document:
+    df_print: paged
+---
+
+reading in the file
+
+```{r}
+setwd("C:/Users/mcook/Box Sync/1MPAMI")
+temp <- read.csv("Temperature2 during lockdown.csv", header = TRUE)
+
+temp$week <- as.factor(temp$week)
+temp$doweek <- as.factor(temp$doWeek)
+temp$time <- as.factor(temp$time)
+tempmean = mean(temp$Temp)
+tempsd = sd(temp$Temp)
+tempmean_1 <- tempmean - tempsd
+tempmean_2 <- tempmean - 2 * tempsd
+tempmean.2 <- tempmean + 2 * tempsd
+tempmean.1 <- tempmean + tempsd
+summary(temp)
+par(mfrow=c(1,2))
+plot(temp$Temp) + abline(h=c(tempmean_2, tempmean_1, tempmean, tempmean.1, tempmean.2),col=c("red","red","red","red","red"), lty=c(3,2,1,2,3), lwd = c(1,2,3,2,1))
+hist(temp$Temp)
+
+
+
+
+```
+
+### Looking at variance between weeks
+
+
+```{r}
+boxplot(temp$Temp~temp$week, main="Temperature by week", xlab="Week", ylab="Temp", col = "orange")
+model_w <- aov(Temp~week, data=temp)
+summary(model_w)
+model.tables(model_w, type="means")
+#TukeyHSD(model_w, conf.level=.99)
+par(mfrow=c(1,2))
+boxplot(temp$Temp[temp$time=="a"]~temp$week[temp$time=="a"], main="Temperature of MORNING by week", xlab="Week", ylab="Temp", col = "green",ylim=c(96.5,98.2))
+boxplot(temp$Temp[temp$time=="p"]~temp$week[temp$time=="p"], main="Temperature of 1pm by week", xlab="Week", ylab="Temp", col = "blue",ylim=c(96.5,98.2))
+```
+
+### Looking at variance between days of the week
+
+
+```{r}
+boxplot(temp$Temp~temp$doweek, main="Temperature by Day of the week", xlab="Day", ylab="Temp", col = "blue")
+model_dow <- aov(Temp~doweek, data=temp)
+summary(model_dow)
+TukeyHSD(model_dow, conf.level=.99)
+```
+
+
+
+### Looking at variance between the time of day: AM (n7:30 to 9am) to PM (~1pm)
+
+### at 92.57% confidence level, we reject the null hypothesis that there is no difference between temperature in the morning and in the afternoon.
+
+```{r}
+
+boxplot(temp$Temp~temp$time, main="Temperature by AM vs. PM", xlab="AM or PM", ylab="Temp", col = "green")
+model_time <- aov(Temp~time, data=temp)
+model.tables(model_time, type="means")
+summary(model_time)
+TukeyHSD(model_time, conf.level=.99)
+
+
+tempamean = mean(temp$Temp[temp$time=="a"])
+tempalabel = c("Mean Temp =",round(tempamean,2))
+tempasd = sd(temp$Temp[temp$time=="a"])
+tempamean_1 <- tempamean - tempasd
+tempamean_2 <- tempamean - 2 * tempasd
+tempamean.2 <- tempamean + 2 * tempasd
+tempamean.1 <- tempamean + tempasd
+#summary(temp)
+par(mfrow=c(2,2))
+plot(temp$Temp[temp$time=="a"], ylab="Morning Temp", xlab=tempalabel) + abline(h=c(tempamean_2, tempamean_1, tempamean, tempamean.1, tempamean.2),col=c("red","red","red","red","red"), lty=c(3,2,1,2,3), lwd = c(1,2,3,2,1))
+hist(temp$Temp[temp$time=="a"], main="Morning temperature")
+
+temppmean = mean(temp$Temp[temp$time=="p"])
+tempplabel = c("Mean Temp =",round(temppmean,2))
+temppsd = sd(temp$Temp[temp$time=="p"])
+temppmean_1 <- temppmean - temppsd
+temppmean_2 <- temppmean - 2 * temppsd
+temppmean.2 <- temppmean + 2 * temppsd
+temppmean.1 <- temppmean + temppsd
+#summary(temp)
+
+plot(temp$Temp[temp$time=="p"], ylab="Afternoon Temp", xlab=tempplabel) + abline(h=c(temppmean_2, temppmean_1, temppmean, temppmean.1, temppmean.2),col=c("red","red","red","red","red"), lty=c(3,2,1,2,3), lwd = c(1,2,3,2,1))
+hist(temp$Temp[temp$time=="p"],breaks=10,main="1pm temperature")
+```
