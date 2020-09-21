@@ -10,7 +10,11 @@ output:
 reading in the file
 
 ```{r}
-setwd("C:/Users/mcook/Box Sync/1MPAMI")
+#install.packages("ggridges")
+library(ggridges)
+
+
+#setwd("C:/Users/mcook/Box Sync/1MPAMI/Temperature")
 temp <- read.csv("Temperature2 during lockdown.csv", header = TRUE)
 
 temp$week <- as.factor(temp$week)
@@ -70,10 +74,12 @@ model.tables(model_time, type="means")
 summary(model_time)
 TukeyHSD(model_time, conf.level=.99)
 
+am_temp = temp[temp$time=="a",]
+pm_temp = temp[temp$time=='p',]
 
-tempamean = mean(temp$Temp[temp$time=="a"])
+tempamean = mean(am_temp$Temp)
 tempalabel = c("Mean Temp =",round(tempamean,2))
-tempasd = sd(temp$Temp[temp$time=="a"])
+tempasd = sd(am_temp$Temp)
 tempamean_1 <- tempamean - tempasd
 tempamean_2 <- tempamean - 2 * tempasd
 tempamean.2 <- tempamean + 2 * tempasd
@@ -94,4 +100,16 @@ temppmean.1 <- temppmean + temppsd
 
 plot(temp$Temp[temp$time=="p"], ylab="Afternoon Temp", xlab=tempplabel) + abline(h=c(temppmean_2, temppmean_1, temppmean, temppmean.1, temppmean.2),col=c("red","red","red","red","red"), lty=c(3,2,1,2,3), lwd = c(1,2,3,2,1))
 hist(temp$Temp[temp$time=="p"],breaks=10,main="1pm temperature")
+
+par(mfrow=c(1,1))
+temp %>% ggplot(aes(Temp, fill=time)) + 
+  labs(x ="This is the Temperature", y="frequency", title="Twice Daily Temperature Checks") +
+  geom_histogram(binwidth=0.1) + scale_x_continuous(breaks=seq(96.5,98.1,.2))
+
+
+
+temp %>% ggplot(aes(Temp,time)) +
+  geom_density_ridges(jittered_points=TRUE, position=position_points_jitter(height = 0),
+                      point_shape = "|", point_size = 3,
+                      point_alpha=1, alpha=.7)
 ```
